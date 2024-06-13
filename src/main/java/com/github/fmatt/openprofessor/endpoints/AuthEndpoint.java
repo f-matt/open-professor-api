@@ -45,18 +45,21 @@ public class AuthEndpoint {
     @Inject
     private PropertiesService propertiesService;
 
-    @POST
+ 	@POST
     @Path("/login")
-    public Response login(@Context HttpServletRequest request, UsernamePasswordDto usernamePasswordDto) {
-        if (usernamePasswordDto == null || usernamePasswordDto.getUsername() == null || usernamePasswordDto.getPassword() == null) 
+    public Response login(UsernamePasswordDto usernamePasswordDto) {
+		if (usernamePasswordDto == null || usernamePasswordDto.getUsername() == null || usernamePasswordDto.getPassword() == null) 
             return Response.status(Response.Status.BAD_REQUEST).entity("Username and password are mandatory.").build();
 
         try {
-            request.login(usernamePasswordDto.getUsername(), usernamePasswordDto.getPassword());
-            JwtToken jwtToken = createJwtToken(usernamePasswordDto.getUsername());
-            return Response.ok(jwtToken).build();
-        } catch(ServletException e) {
-            return Response.status(Response.Status.FORBIDDEN).entity("Invalid username/password.").build();
+			if (usersService.authenticateUser(usernamePasswordDto.getUsername(), usernamePasswordDto.getPassword())) {
+                JwtToken jwtToken = createJwtToken(usernamePasswordDto.getUsername());
+                return Response.ok(jwtToken).build();
+            }
+
+            return Response.status(Response.Status.FORBIDDEN).entity("Invalid credentials.").build();
+        } catch (CustomRuntimeException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
             return Response.status(Response.Status.FORBIDDEN).entity("Error processing authentication.").build();
