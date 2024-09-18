@@ -1,78 +1,100 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.fmatt</groupId>
-	<artifactId>open-professor-api</artifactId>
+	<artifactId>open-professor</artifactId>
+	<version>${revision}</version>
+	<packaging>pom</packaging>
 
-	<packaging>war</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<modules>
+		<module>open-professor-domain</module>
+		<module>open-professor-ear</module>
+		<module>open-professor-ejb</module>
+		<module>open-professor-web</module>
+	</modules>
 
 	<properties>
+		<revision>1.0.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<version.commons.lang>3.14.0</version.commons.lang>
+
+		<maven.compiler.release>17</maven.compiler.release>
+
+		<version.compiler.plugin>3.13.0</version.compiler.plugin>
+		<version.war.plugin>2.5</version.war.plugin>
+		<version.ejb.plugin>3.1.0</version.ejb.plugin>
+		<version.ear.plugin>3.2.0</version.ear.plugin>
+		<version.wildfly.plugin>2.1.0.Final</version.wildfly.plugin>
+
+		<version.jakartaee.api>10.0.0</version.jakartaee.api>
+
 		<version.modelgen>6.2.22.Final</version.modelgen>
-		<version.commons-codec>1.16.0</version.commons-codec>
+		<version.commons.lang>3.14.0</version.commons.lang>
+		<version.commons.codec>1.16.0</version.commons.codec>
 	</properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>jakarta.platform</groupId>
-			<artifactId>jakarta.jakartaee-api</artifactId>
-			<version>9.1.0</version>
-			<scope>provided</scope>
-		</dependency>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.github.fmatt</groupId>
+				<artifactId>open-professor-domain</artifactId>
+				<version>${project.version}</version>
+				<scope>provided</scope>
+			</dependency>
 
-		<dependency>
-			<groupId>com.auth0</groupId>
-			<artifactId>java-jwt</artifactId>
-			<version>4.4.0</version>
-		</dependency>
+			<dependency>
+				<groupId>com.github.fmatt</groupId>
+				<artifactId>open-professor-ejb</artifactId>
+				<version>${project.version}</version>
+				<type>ejb</type>
+				<scope>provided</scope>
+			</dependency>
 
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>${version.commons.lang}</version>
-		</dependency>
+			<dependency>
+				<groupId>com.github.fmatt</groupId>
+				<artifactId>open-professor-web</artifactId>
+				<version>${project.version}</version>
+				<type>war</type>
+				<scope>provided</scope>
+			</dependency>
 
-		<dependency>
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>${version.commons-codec}</version>
-		</dependency>
-	</dependencies>
+			<dependency>
+				<groupId>jakarta.platform</groupId>
+				<artifactId>jakarta.jakartaee-api</artifactId>
+				<version>${version.jakartaee.api}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-lang3</artifactId>
+				<version>${version.commons.lang}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>${version.commons.codec}</version>
+				<scope>provided</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
-		<finalName>open-professor-api</finalName>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
-				<configuration>
-					<annotationProcessorPaths>
-						<annotationProcessorPath>
-							<groupId>org.hibernate.orm</groupId>
-							<artifactId>hibernate-jpamodelgen</artifactId>
-							<version>${version.modelgen}</version>
-						</annotationProcessorPath>
-					</annotationProcessorPaths>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>3.4.0</version>
-			</plugin>
-
-			<!-- Wildfly -->
-			<plugin>
-				<groupId>org.wildfly.plugins</groupId>
-				<artifactId>wildfly-maven-plugin</artifactId>
-				<version>4.2.2.Final</version>
-			</plugin>
-		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.wildfly.plugins</groupId>
+					<artifactId>wildfly-maven-plugin</artifactId>
+					<version>${version.wildfly.plugin}</version>
+					<configuration>
+						<skip>true</skip>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>
