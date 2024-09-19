@@ -6,6 +6,7 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -25,22 +26,27 @@ public class PropertiesService {
     private void loadProperties() {
         try {
             Parameter parameter = parametersService.findByName(Parameter.PROPERTIES_FILE_PATH);
-            if (parameter == null)
-                throw new CustomRuntimeException("Configuration file parameter not set.");
-
-            String propertiesFilePath = parameter.getValue();
-            if (propertiesFilePath == null || propertiesFilePath.isBlank())
-                throw new CustomRuntimeException("Properties file not found.");
-
-            InputStream inputStream = new FileInputStream(propertiesFilePath);
-            Properties properties = new Properties();
-            properties.load(inputStream);
+            Properties properties = getProperties(parameter);
 
             jwtSecret = properties.getProperty("app.jwtsecret");
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
             throw new CustomRuntimeException("Error loading properties file.");
         }
+    }
+
+    private static Properties getProperties(Parameter parameter) throws IOException {
+        if (parameter == null)
+            throw new CustomRuntimeException("Configuration file parameter not set.");
+
+        String propertiesFilePath = parameter.getValue();
+        if (propertiesFilePath == null || propertiesFilePath.isBlank())
+            throw new CustomRuntimeException("Properties file not found.");
+
+        InputStream inputStream = new FileInputStream(propertiesFilePath);
+        Properties properties = new Properties();
+        properties.load(inputStream);
+        return properties;
     }
 
     public String getJWTSecret() {
