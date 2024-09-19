@@ -30,6 +30,7 @@
 
 		<version.jakartaee.api>10.0.0</version.jakartaee.api>
 
+		<version.ejb>3.2</version.ejb>
 		<version.modelgen>6.2.22.Final</version.modelgen>
 		<version.commons.lang>3.14.0</version.commons.lang>
 		<version.commons.codec>1.16.0</version.commons.codec>
@@ -37,6 +38,13 @@
 
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>jakarta.platform</groupId>
+				<artifactId>jakarta.jakartaee-api</artifactId>
+				<version>${version.jakartaee.api}</version>
+				<scope>provided</scope>
+			</dependency>
+
 			<dependency>
 				<groupId>com.github.fmatt</groupId>
 				<artifactId>open-professor-domain</artifactId>
@@ -57,13 +65,6 @@
 				<artifactId>open-professor-web</artifactId>
 				<version>${project.version}</version>
 				<type>war</type>
-				<scope>provided</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>jakarta.platform</groupId>
-				<artifactId>jakarta.jakartaee-api</artifactId>
-				<version>${version.jakartaee.api}</version>
 				<scope>provided</scope>
 			</dependency>
 

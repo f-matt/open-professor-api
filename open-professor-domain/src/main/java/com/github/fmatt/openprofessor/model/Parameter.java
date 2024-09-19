@@ -1,17 +1,28 @@
 package com.github.fmatt.openprofessor.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "parameters")
+@NamedQuery(name = "Parameter.findAll",
+        query = "SELECT p "
+                + "FROM Parameter p "
+                + "ORDER BY p.name")
+@NamedQuery(name = "Parameter.findByName",
+        query = "SELECT p "
+                + "FROM Parameter p "
+                + "WHERE UPPER(p.name) = :name")
 public class Parameter extends BaseEntity {
-    
+
+    public static final String PROPERTIES_FILE_PATH = "PROPERTIES_FILE_PATH";
+
     @Size(max = 20)
     private String name;
 
-    private String text;
+    private String value;
 
     public String getName() {
         return name;
@@ -21,12 +32,12 @@ public class Parameter extends BaseEntity {
         this.name = name;
     }
 
-    public String getText() {
-        return text;
+    public String getValue() {
+        return value;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setValue(String value) {
+        this.value = value;
     }
 
 }

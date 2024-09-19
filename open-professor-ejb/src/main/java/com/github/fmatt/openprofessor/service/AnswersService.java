@@ -1,15 +1,14 @@
 package com.github.fmatt.openprofessor.service;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.github.fmatt.openprofessor.model.Answer;
 import com.github.fmatt.openprofessor.utils.CustomRuntimeException;
-
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Stateless
 public class AnswersService {
