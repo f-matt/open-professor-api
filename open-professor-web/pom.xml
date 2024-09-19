@@ -15,6 +15,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>com.github.fmatt</groupId>
 			<artifactId>open-professor-domain</artifactId>
 		</dependency>
@@ -23,11 +28,6 @@
 			<groupId>com.github.fmatt</groupId>
 			<artifactId>open-professor-ejb</artifactId>
 			<type>ejb</type>
-		</dependency>
-
-		<dependency>
-			<groupId>jakarta.platform</groupId>
-			<artifactId>jakarta.jakartaee-api</artifactId>
 		</dependency>
 
 		<dependency>
@@ -53,13 +53,4 @@
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
 	</dependencies>
-	
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>3.3.2</version>
-			</plugin>
-		</plugins>
-	</build>
 </project>

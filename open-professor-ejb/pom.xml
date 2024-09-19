@@ -15,13 +15,13 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.github.fmatt</groupId>
-			<artifactId>open-professor-domain</artifactId>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>jakarta.platform</groupId>
-			<artifactId>jakarta.jakartaee-api</artifactId>
+			<groupId>com.github.fmatt</groupId>
+			<artifactId>open-professor-domain</artifactId>
 		</dependency>
 
 		<dependency>
@@ -42,7 +42,7 @@
 				<artifactId>maven-ejb-plugin</artifactId>
 				<version>${version.ejb.plugin}</version>
 				<configuration>
-					<ejbVersion>3.2</ejbVersion>
+					<ejbVersion>${version.ejb}</ejbVersion>
 				</configuration>
 			</plugin>
 		</plugins>

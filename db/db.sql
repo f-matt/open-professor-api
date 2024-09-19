@@ -100,3 +100,5 @@ CREATE TABLE parameters (
     value text,
     PRIMARY KEY (id)
 );
+
+INSERT INTO parameters (name, value) VALUES ('PROPERTIES_FILE_PATH', '/etc/open-professor/app.properties');

@@ -137,7 +137,7 @@ public class AuthEndpoint {
 				.withJWTId(jwtIdAccess)
 				.withClaim("sub", username)
 				.withClaim("type", "access")
-				.withArrayClaim("roles", roles.toArray(new String[0]))
+				.withArrayClaim("roles", roles != null ? roles.toArray(new String[0]) : new String[0])
 				.sign(algorithm));
             jwtToken.setRefreshToken(JWT.create()
 				.withExpiresAt(LocalDateTime.now().plusMinutes(30).atZone(ZoneId.systemDefault()).toInstant())
