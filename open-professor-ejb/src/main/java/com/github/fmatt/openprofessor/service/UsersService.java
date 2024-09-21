@@ -1,15 +1,16 @@
 package com.github.fmatt.openprofessor.service;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.fmatt.openprofessor.model.*;
+import jakarta.persistence.criteria.Join;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.fmatt.openprofessor.model.User;
-import com.github.fmatt.openprofessor.model.User_;
 import com.github.fmatt.openprofessor.utils.CustomRuntimeException;
 
 import jakarta.ejb.Stateless;
@@ -76,9 +77,28 @@ public class UsersService {
     }
 
     public List<String> findRolesByUsername(String username) {
-        // TODO
+        if (StringUtils.isBlank(username))
+            throw new CustomRuntimeException("Username is mandatory.");
 
-        return null;
+        try {
+            CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Permission> query = builder.createQuery(Permission.class);
+            Root<User> u = query.from(User.class);
+            Join<User, Role> r = u.join(User_.roles);
+            Join<Role, Permission> p = r.join(Role_.permissions);
+
+            query.select(p).distinct(true).where(builder.equal(u.get(User_.username), username));
+
+            List<Permission> permissions = entityManager.createQuery(query).getResultList();
+            List<String> permissionNames = new ArrayList<>();
+
+            permissions.forEach(perm -> permissionNames.add(perm.getDescription()));
+
+            return permissionNames;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+            throw new CustomRuntimeException("Error retrieving permissions.");
+        }
     }
     
 }
