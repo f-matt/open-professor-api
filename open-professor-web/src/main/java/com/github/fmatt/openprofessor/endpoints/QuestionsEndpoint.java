@@ -23,9 +23,9 @@ public class QuestionsEndpoint {
     private QuestionsService questionsService;
 
     @GET
-    public Response findQuestions() {
+    public Response findQuestions(@QueryParam("course") Integer courseId, @QueryParam("section") Integer section) {
         try {
-            List<Question> questions = questionsService.findQuestions();
+            List<Question> questions = questionsService.findQuestions(courseId, section);
             return Response.ok(questions).build();
         } catch (Exception e) {
             return JaxrsUtils.processException(e, logger, "Error retrieving courses.");

@@ -6,6 +6,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
 @Entity
 @Table(name = "answers")
 public class Answer extends BaseEntity{
@@ -17,6 +20,7 @@ public class Answer extends BaseEntity{
 
     @ManyToOne
     @JoinColumn(name = "question_id")
+    @JsonIgnore
     private Question question;
 
     public String getText() {

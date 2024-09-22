@@ -34,6 +34,7 @@
 		<version.modelgen>6.2.22.Final</version.modelgen>
 		<version.commons.lang>3.14.0</version.commons.lang>
 		<version.commons.codec>1.16.0</version.commons.codec>
+		<version.jackson.annotations>2.17.2</version.jackson.annotations>
 	</properties>
 
 	<dependencyManagement>
@@ -79,6 +80,13 @@
 				<groupId>commons-codec</groupId>
 				<artifactId>commons-codec</artifactId>
 				<version>${version.commons.codec}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>${version.jackson.annotations}</version>
 				<scope>provided</scope>
 			</dependency>
 		</dependencies>
