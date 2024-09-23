@@ -19,6 +19,8 @@ public class Parameter extends BaseEntity {
 
     public static final String PROPERTIES_FILE_PATH = "PROPERTIES_FILE_PATH";
 
+    public static final String MOODLE_MASK = "MOODLE_MASK";
+
     @Size(max = 20)
     private String name;
 

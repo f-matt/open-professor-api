@@ -2,8 +2,7 @@ package com.github.fmatt.openprofessor.model;
 
 import jakarta.persistence.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "questions")
@@ -18,7 +17,7 @@ public class Question extends BaseEntity {
     private Course course;
 
     @OneToMany(mappedBy = "question")
-    private Set<Answer> answers = new HashSet<>();
+    private List<Answer> answers = new ArrayList<>();
 
     public String getText() {
         return text;
@@ -44,11 +43,12 @@ public class Question extends BaseEntity {
         this.course = course;
     }
 
-    public Set<Answer> getAnswers() {
+    public List<Answer> getAnswers() {
         return answers;
     }
 
-    public void setAnswers(Set<Answer> answers) {
+    public void setAnswers(List<Answer> answers) {
         this.answers = answers;
     }
+
 }

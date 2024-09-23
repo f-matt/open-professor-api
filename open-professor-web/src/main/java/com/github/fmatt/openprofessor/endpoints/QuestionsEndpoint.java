@@ -1,6 +1,10 @@
 package com.github.fmatt.openprofessor.endpoints;
 
+import com.github.fmatt.openprofessor.dto.QuestionIdsDto;
+import com.github.fmatt.openprofessor.model.Answer;
+import com.github.fmatt.openprofessor.model.Parameter;
 import com.github.fmatt.openprofessor.model.Question;
+import com.github.fmatt.openprofessor.service.ParametersService;
 import com.github.fmatt.openprofessor.service.QuestionsService;
 import com.github.fmatt.openprofessor.utils.JaxrsUtils;
 import jakarta.inject.Inject;
@@ -9,6 +13,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 @Path("questions")
@@ -21,6 +26,9 @@ public class QuestionsEndpoint {
 
     @Inject
     private QuestionsService questionsService;
+
+    @Inject
+    private ParametersService parametersService;
 
     @GET
     public Response findQuestions(@QueryParam("course") Integer courseId, @QueryParam("section") Integer section) {
@@ -42,6 +50,49 @@ public class QuestionsEndpoint {
             return Response.ok().build();
         } catch (Exception e) {
             return JaxrsUtils.processException(e, logger, "Error saving course.");
+        }
+    }
+
+    @POST
+    @Path("export-moodle")
+    public Response exportMoodle(QuestionIdsDto dto) {
+        if (dto == null)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Selected questions are mandatory.").build();
+
+        if (dto.getQuestionIds() == null || dto.getQuestionIds().isEmpty())
+            return Response.status(Response.Status.BAD_REQUEST).entity("At least one question must be selected.").build();
+
+        try {
+            Parameter parameter = parametersService.findByName(Parameter.MOODLE_MASK);
+            if (parameter == null)
+                return Response.status(Response.Status.BAD_REQUEST).entity("Moodle mask parameter not configured.").build();
+
+            List<Question> questions = questionsService.findByIdIn(dto.getQuestionIds());
+            StringBuilder content = new StringBuilder();
+
+            for (Question question : questions) {
+                String exportedText = parameter.getValue()
+                        .replace("{0}", String.valueOf(question.getCourse().getId()))
+                        .replace("{1}", String.valueOf(question.getId()))
+                        .replace("{2}", question.getText());
+
+                Optional<Answer> correctAnswer = question.getAnswers().stream().filter(Answer::getCorrect).findFirst();
+                if (correctAnswer.isEmpty())
+                    return Response.status(Response.Status.BAD_REQUEST).entity("Missing correct answer for question " + question.getId() + ".").build();
+
+                exportedText = exportedText.replace("{3}", correctAnswer.get().getText());
+
+                List<Answer> wrongAnswers = question.getAnswers().stream().filter(a -> !a.getCorrect()).toList();
+                String[] wrongPlaceholders = {"{4}", "{5}", "{6}"};
+                for (int i = 0; i < wrongPlaceholders.length; ++i)
+                    exportedText = exportedText.replace(wrongPlaceholders[i], wrongAnswers.get(i).getText());
+
+                content.append(exportedText);
+            }
+
+            return Response.ok(content).build();
+        } catch (Exception e) {
+            return JaxrsUtils.processException(e, logger, "Error exporting questions.");
         }
     }
 
