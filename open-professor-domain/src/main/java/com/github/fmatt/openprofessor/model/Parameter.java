@@ -21,6 +21,8 @@ public class Parameter extends BaseEntity {
 
     public static final String MOODLE_MASK = "MOODLE_MASK";
 
+    public static final String LATEX_MASK = "LATEX_MASK";
+
     @Size(max = 20)
     private String name;
 
