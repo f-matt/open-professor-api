@@ -35,7 +35,6 @@ public class QuestionsService {
 
             // Save related answers
             for (Answer answer : question.getAnswers()) {
-                logger.info("Saving answer " + answer.getText());
                 if (answer.getId() != null) {
                     answer.setQuestion(question);
                     entityManager.merge(answer);

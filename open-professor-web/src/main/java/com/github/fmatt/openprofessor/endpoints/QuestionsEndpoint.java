@@ -1,21 +1,30 @@
 package com.github.fmatt.openprofessor.endpoints;
 
+import com.github.fmatt.openprofessor.dto.CourseSectionDto;
 import com.github.fmatt.openprofessor.dto.QuestionIdsDto;
 import com.github.fmatt.openprofessor.model.Answer;
 import com.github.fmatt.openprofessor.model.Parameter;
 import com.github.fmatt.openprofessor.model.Question;
 import com.github.fmatt.openprofessor.service.ParametersService;
 import com.github.fmatt.openprofessor.service.QuestionsService;
+import com.github.fmatt.openprofessor.utils.CustomRuntimeException;
 import com.github.fmatt.openprofessor.utils.JaxrsUtils;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
+import java.io.BufferedOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Path("questions")
 @Produces(MediaType.APPLICATION_JSON)
@@ -72,28 +81,37 @@ public class QuestionsEndpoint {
             StringBuilder content = new StringBuilder();
 
             for (Question question : questions) {
-                String exportedText = parameter.getValue()
-                        .replace("{0}", String.valueOf(question.getCourse().getId()))
-                        .replace("{1}", String.valueOf(question.getId()))
-                        .replace("{2}", question.getText());
-
-                Optional<Answer> correctAnswer = question.getAnswers().stream().filter(Answer::getCorrect).findFirst();
-                if (correctAnswer.isEmpty())
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Missing correct answer for question " + question.getId() + ".").build();
-
-                exportedText = exportedText.replace("{3}", correctAnswer.get().getText());
-
-                List<Answer> wrongAnswers = question.getAnswers().stream().filter(a -> !a.getCorrect()).toList();
-                String[] wrongPlaceholders = {"{4}", "{5}", "{6}"};
-                for (int i = 0; i < wrongPlaceholders.length; ++i)
-                    exportedText = exportedText.replace(wrongPlaceholders[i], wrongAnswers.get(i).getText());
-
-                content.append(exportedText);
+                formatMoodle(parameter, question, content);
             }
 
             return Response.ok(content).build();
         } catch (Exception e) {
             return JaxrsUtils.processException(e, logger, "Error exporting questions.");
+        }
+    }
+
+    private void formatMoodle(Parameter moodleParameter, Question question, StringBuilder content) {
+        try {
+            String exportedText = moodleParameter.getValue()
+                    .replace("{0}", String.valueOf(question.getCourse().getId()))
+                    .replace("{1}", String.valueOf(question.getId()))
+                    .replace("{2}", question.getText());
+
+            Optional<Answer> correctAnswer = question.getAnswers().stream().filter(Answer::getCorrect).findFirst();
+            if (correctAnswer.isEmpty())
+                throw new CustomRuntimeException("Missing correct answer for question " + question.getId() + ".");
+
+            exportedText = exportedText.replace("{3}", correctAnswer.get().getText());
+
+            List<Answer> wrongAnswers = question.getAnswers().stream().filter(a -> !a.getCorrect()).toList();
+            String[] wrongPlaceholders = {"{4}", "{5}", "{6}"};
+            for (int i = 0; i < wrongPlaceholders.length; ++i)
+                exportedText = exportedText.replace(wrongPlaceholders[i], wrongAnswers.get(i).getText());
+
+            content.append(exportedText);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+            throw new CustomRuntimeException("Error formatting moodle question.");
         }
     }
 
@@ -112,11 +130,26 @@ public class QuestionsEndpoint {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Latex mask parameter not configured.").build();
 
             List<Question> questions = questionsService.findByIdIn(dto.getQuestionIds());
+
+            StringBuilder content = formatLatex(questions);
+
+            return Response.ok(content).build();
+        } catch (Exception e) {
+            return JaxrsUtils.processException(e, logger, "Error exporting questions.");
+        }
+    }
+
+    private StringBuilder formatLatex(List<Question> questions) {
+        try {
+            Parameter parameter = parametersService.findByName(Parameter.LATEX_MASK);
+            if (parameter == null)
+                throw new CustomRuntimeException("Latex mask parameter not configured.");
+
             StringBuilder content = new StringBuilder();
             StringBuilder correctAnswers = new StringBuilder();
 
-            String[] options = { "A", "B", "C", "D" };
-            String[] answerPlaceholders = { "{2}", "{3}", "{4}", "{5}" };
+            String[] options = {"A", "B", "C", "D"};
+            String[] answerPlaceholders = {"{2}", "{3}", "{4}", "{5}"};
 
             Random random = new Random();
 
@@ -128,7 +161,7 @@ public class QuestionsEndpoint {
 
                 Optional<Answer> correctAnswer = question.getAnswers().stream().filter(Answer::getCorrect).findFirst();
                 if (correctAnswer.isEmpty())
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Missing correct answer for question " + question.getId() + ".").build();
+                    throw new CustomRuntimeException("Missing correct answer for question " + question.getId() + ".");
 
                 List<Answer> wrongAnswers = question.getAnswers().stream().filter(a -> !a.getCorrect()).toList();
 
@@ -148,7 +181,72 @@ public class QuestionsEndpoint {
 
             content.append(correctAnswers);
 
-            return Response.ok(content).build();
+            return content;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+            throw new CustomRuntimeException("Error exporting to latex.");
+        }
+    }
+
+    @POST
+    @Path("export-moodle-and-latex")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response exportMoodleAndLatex(CourseSectionDto courseSectionDto) {
+        if (courseSectionDto == null)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Course and section are mandatory.").build();
+
+        if (courseSectionDto.getCourse() == null)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Course is mandatory.").build();
+
+        if (courseSectionDto.getSection() == null)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Section is mandatory.").build();
+
+        try {
+            List<Question> questions = questionsService.findQuestions(courseSectionDto.getCourse().getId(),
+                    courseSectionDto.getSection());
+            if (questions.isEmpty())
+                return Response
+                        .status(Response.Status.BAD_REQUEST)
+                        .entity("No question found in the given course/section.")
+                        .build();
+
+            Collections.shuffle(questions);
+
+            int pivot = questions.size() / 2;
+
+            Parameter parameterMoodle = parametersService.findByName(Parameter.MOODLE_MASK);
+            if (parameterMoodle == null)
+                return Response.status(Response.Status.BAD_REQUEST).entity("Moodle mask parameter not configured.").build();
+
+            StringBuilder moodleContent = new StringBuilder();
+            for (int i = 0; i < pivot; ++i)
+                formatMoodle(parameterMoodle, questions.get(i), moodleContent);
+
+            StringBuilder latexContent = formatLatex(questions.subList(pivot, questions.size()));
+
+            StreamingOutput streamingOutput = outputStream -> {
+                ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream));
+
+                ZipEntry zipEntryMoodle = new ZipEntry("moodle.xml");
+                zipOutputStream.putNextEntry(zipEntryMoodle);
+                zipOutputStream.write(moodleContent.toString().getBytes(StandardCharsets.UTF_8));
+                zipOutputStream.closeEntry();
+
+                ZipEntry zipEntryLatex = new ZipEntry("latex.tex");
+                zipOutputStream.putNextEntry(zipEntryLatex);
+                zipOutputStream.write(latexContent.toString().getBytes(StandardCharsets.UTF_8));
+                zipOutputStream.closeEntry();
+
+                zipOutputStream.close();
+                outputStream.flush();
+                outputStream.close();
+            };
+
+            return Response
+                    .ok(streamingOutput)
+                    .type(MediaType.TEXT_PLAIN)
+                    .header("Content-Disposition", "attachment; filename=\"export.zip\"")
+                    .build();
         } catch (Exception e) {
             return JaxrsUtils.processException(e, logger, "Error exporting questions.");
         }
