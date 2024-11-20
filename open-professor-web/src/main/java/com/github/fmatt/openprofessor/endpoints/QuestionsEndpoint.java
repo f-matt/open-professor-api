@@ -11,6 +11,7 @@ import com.github.fmatt.openprofessor.utils.CustomRuntimeException;
 import com.github.fmatt.openprofessor.utils.JaxrsUtils;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -190,7 +191,7 @@ public class QuestionsEndpoint {
 
     @POST
     @Path("export-moodle-and-latex")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces("application/zip")
     public Response exportMoodleAndLatex(CourseSectionDto courseSectionDto) {
         if (courseSectionDto == null)
             return Response.status(Response.Status.BAD_REQUEST).entity("Course and section are mandatory.").build();
@@ -244,8 +245,8 @@ public class QuestionsEndpoint {
 
             return Response
                     .ok(streamingOutput)
-                    .type(MediaType.TEXT_PLAIN)
-                    .header("Content-Disposition", "attachment; filename=\"export.zip\"")
+                    .header(HttpHeaders.CONTENT_TYPE, "application/zip")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"export.zip\"")
                     .build();
         } catch (Exception e) {
             return JaxrsUtils.processException(e, logger, "Error exporting questions.");
