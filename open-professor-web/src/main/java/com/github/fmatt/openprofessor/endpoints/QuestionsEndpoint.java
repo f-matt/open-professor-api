@@ -140,6 +140,33 @@ public class QuestionsEndpoint {
         }
     }
 
+    @GET
+    @Path("export-latex")
+    public Response exportLatexByCourseAndSection(@QueryParam("course") Integer courseId,
+                                                  @QueryParam("section") Integer section) {
+        if (courseId == null)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Course is mandatory.").build();
+
+        try {
+            Parameter parameter = parametersService.findByName(Parameter.LATEX_MASK);
+            if (parameter == null)
+                return Response.status(Response.Status.BAD_REQUEST).entity("Latex mask parameter not configured.").build();
+
+            List<Question> questions = questionsService.findByCourseIdAndSection(courseId, section);
+            if (questions.isEmpty() || questions.size() < 10)
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("Must have at least 10 questions in the given course/section.").build();
+
+
+            Collections.shuffle(questions);
+            StringBuilder content = formatLatex(questions.subList(0, 10));
+
+            return Response.ok(content).build();
+        } catch (Exception e) {
+            return JaxrsUtils.processException(e, logger, "Error exporting questions.");
+        }
+    }
+
     private StringBuilder formatLatex(List<Question> questions) {
         try {
             Parameter parameter = parametersService.findByName(Parameter.LATEX_MASK);

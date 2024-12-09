@@ -1,9 +1,6 @@
 package com.github.fmatt.openprofessor.service;
 
-import com.github.fmatt.openprofessor.model.Answer;
-import com.github.fmatt.openprofessor.model.Course;
-import com.github.fmatt.openprofessor.model.Question;
-import com.github.fmatt.openprofessor.model.Question_;
+import com.github.fmatt.openprofessor.model.*;
 import com.github.fmatt.openprofessor.utils.CustomRuntimeException;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -91,6 +88,31 @@ public class QuestionsService {
             questionRoot.fetch(Question_.answers, JoinType.LEFT);
 
             query.where(questionRoot.get(Question_.id).in(ids));
+
+            return entityManager.createQuery(query).getResultList();
+        } catch (CustomRuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+            throw new CustomRuntimeException("Error retrieving questions.");
+        }
+    }
+
+    public List<Question> findByCourseIdAndSection(Integer courseId, Integer section) {
+        try {
+            CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+            CriteriaQuery<Question> query = builder.createQuery(Question.class);
+            Root<Question> question = query.from(Question.class);
+            Join<Question, Course> course = question.join(Question_.course);
+            question.fetch(Question_.answers, JoinType.LEFT);
+
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(builder.equal(course.get(Course_.id), courseId));
+
+            if (section != null)
+                predicates.add(builder.equal(question.get(Question_.section), section));
+
+            query.where(predicates.toArray(new Predicate[0]));
 
             return entityManager.createQuery(query).getResultList();
         } catch (CustomRuntimeException e) {
