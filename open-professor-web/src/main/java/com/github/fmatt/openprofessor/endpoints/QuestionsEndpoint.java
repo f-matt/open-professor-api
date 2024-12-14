@@ -17,6 +17,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -161,7 +162,16 @@ public class QuestionsEndpoint {
             Collections.shuffle(questions);
             StringBuilder content = formatLatex(questions.subList(0, 10));
 
-            return Response.ok(content).build();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            baos.write(content.toString().getBytes(StandardCharsets.UTF_8));
+            baos.flush();
+            baos.close();
+
+            return Response
+                    .ok(baos)
+                    .header(HttpHeaders.CONTENT_TYPE, "text/plain")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"questions.tex\"")
+                    .build();
         } catch (Exception e) {
             return JaxrsUtils.processException(e, logger, "Error exporting questions.");
         }
@@ -184,6 +194,7 @@ public class QuestionsEndpoint {
             for (int i = 1; i <= questions.size(); ++i) {
                 Question question = questions.get(i - 1);
                 String exportedText = parameter.getValue()
+                        .replace("\\\\", "\\")
                         .replace("{0}", String.valueOf(i))
                         .replace("{1}", question.getText());
 
