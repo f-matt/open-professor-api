@@ -8,6 +8,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.NonUniqueResultException;
 import jakarta.persistence.PersistenceContext;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -30,11 +31,20 @@ public class ParametersService {
         if (parameter == null)
             throw new CustomRuntimeException("Parameter is mandatory.");
 
+        if (StringUtils.isBlank(parameter.getName()))
+            throw new CustomRuntimeException("Parameter name is mandatory.");
+
         try {
+            Parameter existingParameter = findByName(parameter.getName());
+            if (existingParameter != null && !existingParameter.equals(parameter))
+                throw new CustomRuntimeException("A parameter with the given name already exists.");
+
             if (parameter.getId() == null)
                 entityManager.persist(parameter);
             else
                 entityManager.merge(parameter);
+        } catch (CustomRuntimeException e) {
+            throw e;
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
             throw new CustomRuntimeException("Error saving parameter.");
@@ -53,6 +63,17 @@ public class ParametersService {
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
             throw new CustomRuntimeException("Error retrieving parameter.");
+        }
+    }
+
+    public List<Parameter> findByNameLike(String name) {
+        try {
+            return entityManager.createNamedQuery("Parameter.findByNameLike", Parameter.class)
+                    .setParameter("name", String.format("%%%s%%", name.toUpperCase()))
+                    .getResultList();
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+            throw new CustomRuntimeException("Error searching parameters.");
         }
     }
 

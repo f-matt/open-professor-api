@@ -15,6 +15,11 @@ import jakarta.validation.constraints.Size;
         query = "SELECT p "
                 + "FROM Parameter p "
                 + "WHERE UPPER(p.name) = :name")
+@NamedQuery(name = "Parameter.findByNameLike",
+        query = "SELECT p "
+                + "FROM Parameter p "
+                + "WHERE UPPER(p.name) LIKE :name "
+                + "ORDER BY p.name")
 public class Parameter extends BaseEntity {
 
     public static final String PROPERTIES_FILE_PATH = "PROPERTIES_FILE_PATH";
